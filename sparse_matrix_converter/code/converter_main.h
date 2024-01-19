@@ -22,8 +22,17 @@ typedef uint64_t u64;
 
 typedef float f32;
 typedef double f64;
-
 typedef u32 b32;
+
+#define internal static
+#define local_persists static
+#define global static
+
+#define Min(A, B) (((A) < (B)) ? (A) : (B))
+#define Max(A, B) (((A) > (B)) ? (A) : (B))
+#define CeilPos(X) ((X-(i32)(X)) > 0 ? (i32)(X+1) : (i32)(X))
+#define CeilNeg(X) ((X-(i32)(X)) < 0 ? (i32)(X-1) : (i32)(X))
+#define Ceil(X) ( ((X) > 0) ? CeilPos(X) : CeilNeg(X) )
 
 // NOTE(miha): Compare two strings, string B is passed as const eg.
 // CopareStrings(&S1, "constant string");
@@ -84,6 +93,14 @@ Memset(void *Destination, u8 Value, u32 Length)
     {
         D[I] = Value;
     }
+}
+
+i32
+Abs(i32 Number)
+{
+    if(Number < 0)
+        return -1*Number;
+    return Number;
 }
 
 #endif // CONVERTER_MAIN_H

@@ -9,6 +9,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "converter_main.h"
 
 // NOTE(miha): Got this magic values from:
 // https://math.nist.gov/MatrixMarket/mmio/c/mmio.h
@@ -57,6 +58,7 @@ enum matrix_market_symmetry
     HERMITIAN,
 };
 
+// NOTE(miha): We can see this TODO
 struct matrix_market_header
 {
     // NOTE(miha): Header line information saved in strings.
@@ -311,11 +313,13 @@ MM_ReadFile(FILE *File, matrix_market *MatrixMarket)
         else if(MatrixMarket->Header.Field == PATTERN)
         {
             // TODO(miha): See how pattern numbers are implemented.
-            if(sscanf(Line, "%u %u %f", &MatrixMarket->Rows[I], &MatrixMarket->Columns[I], 
-                      &((f32 *)MatrixMarket->Elements)[I]) != 3)
+            if(sscanf(Line, "%u %u", &MatrixMarket->Rows[I], &MatrixMarket->Columns[I]) != 2)
             {
                 return SSCANF_ERR;
             }
+            ((i32 *)MatrixMarket->Elements)[I] = 1;
+            
+            // NOTE(miha): Convert to 0 index.
             MatrixMarket->Rows[I]--;
             MatrixMarket->Columns[I]--;
         }
@@ -324,6 +328,113 @@ MM_ReadFile(FILE *File, matrix_market *MatrixMarket)
             return UNKNOWN_VALUE_ERR;
         }
     }
+
+    return 0;
+}
+
+
+// NOTE(miha): Some matrices have symetric MM format, this means only elements
+// on or above diagonal are inputed. This function insert "missing" elements
+// below the diagonal line.
+u32
+MM_InsertSymetricValues(matrix_market *MatrixMarket)
+{
+    u32 Error;
+    char Line[LINE_LENGTH];
+
+    // NOTE(miha): Count how many elements are on and above the diagonal.
+    u32 ElementsAboveDiagonal = 0;
+    u32 ElementsOnDiagonal = 0;
+    for(u32 I = 0; I < MatrixMarket->Header.NonZeroElements; ++I)
+    {
+        if(MM_ToArray(MatrixMarket->Rows, u32)[I] == MM_ToArray(MatrixMarket->Columns, u32)[I])
+        {
+            ElementsOnDiagonal++;
+        }
+        else
+        {
+            ElementsAboveDiagonal++;
+        }
+    }
+
+    u32 NumberOfElements = ElementsAboveDiagonal*2 + ElementsOnDiagonal;
+
+    // NOTE(miha): Allocate memory for arrays.
+    u32 *NewRows = (u32 *)malloc(NumberOfElements * sizeof(u32));
+    if(NewRows == NULL)
+    {
+        return MALLOC_ERR;
+    }
+    u32 *NewColumns = (u32 *)malloc(NumberOfElements * sizeof(u32));
+    if(NewColumns == NULL)
+    {
+        return MALLOC_ERR;
+    }
+    void *NewElements = malloc(NumberOfElements * MatrixMarket->Header.FieldSize);
+    if(NewElements == NULL)
+    {
+        return MALLOC_ERR;
+    }
+
+    // NOTE(miha): Read elements.
+    u32 NewIndex = 0;
+    for(u32 I = 0; I < MatrixMarket->Header.NonZeroElements; ++I)
+    {
+        if(MatrixMarket->Header.Field == REAL)
+        {
+        }
+        else if(MatrixMarket->Header.Field == DOUBLE)
+        {
+        }
+        else if(MatrixMarket->Header.Field == INTEGER)
+        {
+        }
+        else if(MatrixMarket->Header.Field == COMPLEX)
+        {
+        }
+        else if(MatrixMarket->Header.Field == PATTERN)
+        {
+            if(MM_ToArray(MatrixMarket->Rows, u32)[I] == MM_ToArray(MatrixMarket->Columns, u32)[I])
+            {
+                // NOTE(miha): Diagonal elements.
+
+                MM_ToArray(NewRows, u32)[NewIndex] = MM_ToArray(MatrixMarket->Rows, u32)[I]; 
+                MM_ToArray(NewColumns, u32)[NewIndex] = MM_ToArray(MatrixMarket->Columns, u32)[I]; 
+                MM_ToArray(NewElements, u32)[NewIndex] = MM_ToArray(MatrixMarket->Elements, u32)[I]; 
+                NewIndex++;
+            }
+            else
+            {
+                // NOTE(miha): Off-diagonal elements.
+
+                MM_ToArray(NewRows, u32)[NewIndex] = MM_ToArray(MatrixMarket->Rows, u32)[I]; 
+                MM_ToArray(NewColumns, u32)[NewIndex] = MM_ToArray(MatrixMarket->Columns, u32)[I]; 
+                MM_ToArray(NewElements, u32)[NewIndex] = MM_ToArray(MatrixMarket->Elements, u32)[I]; 
+                NewIndex++;
+
+                // NOTE(miha): Put elements also below the main diagonal.
+                MM_ToArray(NewColumns, u32)[NewIndex] = MM_ToArray(MatrixMarket->Rows, u32)[I]; 
+                MM_ToArray(NewRows, u32)[NewIndex] = MM_ToArray(MatrixMarket->Columns, u32)[I]; 
+                MM_ToArray(NewElements, u32)[NewIndex] = MM_ToArray(MatrixMarket->Elements, u32)[I]; 
+                NewIndex++;
+            }
+        }
+        else
+        {
+            return UNKNOWN_VALUE_ERR;
+        }
+    }
+
+    MatrixMarket->Header.NumberOfRows = NumberOfElements;
+    MatrixMarket->Header.NumberOfColumns = NumberOfElements;
+    MatrixMarket->Header.NonZeroElements = NumberOfElements;
+
+    free(MatrixMarket->Rows);
+    free(MatrixMarket->Columns);
+    free(MatrixMarket->Elements);
+    MatrixMarket->Rows = NewRows;
+    MatrixMarket->Columns = NewColumns;
+    MatrixMarket->Elements = NewElements;
 
     return 0;
 }
