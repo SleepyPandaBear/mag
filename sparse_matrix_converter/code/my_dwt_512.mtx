@@ -1,0 +1,22 @@
+%%MatrixMarket matrix coordinate pattern symmetric
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/HB/dwt_512
+% name: HB/dwt_512
+% [SYMMETRIC CONNECTION TABLE FROM DTNSRDC, WASHINGTON]
+% id: 128
+% date: 1980
+% author: G. Everstine, D. Taylor
+% ed: I. Duff, R. Grimes, J. Lewis
+% fields: title A name id date author ed kind
+% kind: structural problem
+%-------------------------------------------------------------------------------
+8 8 8
+1 1
+2 2
+3 3
+4 4
+5 4
+6 4
+6 5
+7 6

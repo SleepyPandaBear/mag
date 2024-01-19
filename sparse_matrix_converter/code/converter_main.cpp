@@ -21,15 +21,18 @@
 int main() 
 {
     // FILE *File = fopen("494_bus.mtx", "r");
-    FILE *File = fopen("dwt_512.mtx", "r");
+    FILE *File = fopen("my_dwt_512.mtx", "r");
     matrix_market MatrixMarket = {};
     MM_ReadFile(File, &MatrixMarket);
     MM_PrintHeader(&MatrixMarket.Header);
     MM_InsertSymetricValues(&MatrixMarket);
 
     bcoo BCOO = {};
-    BCOO.BlockWidth = 8;
-    BCOO.BlockHeight = 8;
+    BCOO.BlockWidth = 4;
+    BCOO.BlockHeight = 4;
+
+    BCOO_ConvertFromMatrixMarket(&BCOO, &MatrixMarket);
+    BCOO_Print(&BCOO);
 
     fclose(File);
 }
