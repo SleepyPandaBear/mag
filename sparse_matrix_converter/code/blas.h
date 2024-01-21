@@ -21,6 +21,22 @@ struct vector
 };
 
 vector
+ZeroVector(u32 N, u32 FieldSize)
+{
+    vector Result = {};
+    Result.Elements = malloc(N*FieldSize);
+    Result.Length = N;
+    Result.FieldSize = FieldSize;
+
+    for(u32 I = 0; I < N; ++I)
+    {
+        ((u32 *)Result.Elements)[I] = 0;
+    }
+
+    return Result;
+}
+
+vector
 IdentityVector(u32 N, u32 FieldSize)
 {
     vector Result = {};
@@ -30,7 +46,7 @@ IdentityVector(u32 N, u32 FieldSize)
 
     for(u32 I = 0; I < N; ++I)
     {
-        ((f32 *)Result.Elements)[I] = 1.0f;
+        ((u32 *)Result.Elements)[I] = 1;
     }
 
     return Result;
@@ -65,7 +81,7 @@ PrintVector(vector *Vector)
 {
     for(u32 I = 0; I < Vector->Length; ++I)
     {
-        printf("%f, ", MM_ToArray(Vector->Elements, f32)[I]);
+        printf("%d, ", MM_ToArray(Vector->Elements, u32)[I]);
     }
     printf("\n");
 }

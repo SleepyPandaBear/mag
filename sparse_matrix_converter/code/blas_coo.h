@@ -22,7 +22,7 @@ COO_SparseMatrixVectorMultiplication(coo *COO, vector *In, vector *Out)
     {
         u32 RowIndex = ((u32 *)COO->Rows)[I];
         u32 ColumnIndex = ((u32 *)COO->Columns)[I];
-        ((f32 *)Out->Elements)[RowIndex] += ((f32 *)COO->Elements)[I] * ((f32 *)In->Elements)[ColumnIndex];
+        ((u32 *)Out->Elements)[RowIndex] += ((u32 *)COO->Elements)[I] * ((u32 *)In->Elements)[ColumnIndex];
     }
 
     return 0;

@@ -118,8 +118,6 @@ BCOO_ConvertFromMatrixMarket(bcoo *BCOO, matrix_market *MatrixMarket)
         u32 Row = MM_ToArray(MatrixMarket->Rows, u32)[I];
         u32 Column = MM_ToArray(MatrixMarket->Columns, u32)[I];
         i32 BlockIndex = FindBlockIndex(BCOO, Row, Column);
-        printf("block index: %d\n", BlockIndex);
-        printf("br: %d, bc: %d\n", Row/4, Column/4);
         if(BlockIndex == -1)
             BlockIndex = CreateBlock(BCOO, Row, Column);
         i32 ElementIndex = FindElementIndex(BCOO, Row, Column);
