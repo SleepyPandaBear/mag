@@ -89,7 +89,8 @@ internal inline u32 MM_ReadLine(FILE *File, char *Line, u32 Length) {
   return 0;
 }
 
-u32 MM_ReadHeaderLine(FILE *File, matrix_market_header *Header) {
+internal inline u32 MM_ReadHeaderLine(FILE *File,
+                                      matrix_market_header *Header) {
   char Line[LINE_LENGTH];
 
   // NOTE(miha): Try to read first file's line.
@@ -210,7 +211,6 @@ internal inline u32 MM_ReadFile(FILE *File, matrix_market *MatrixMarket) {
   }
 
   // NOTE(miha): Read elements.
-  // TODO(miha): Pattern type doesn't have element.
   for (u32 I = 0; I < MatrixMarket->Header.NonZeroElements; ++I) {
     Error = MM_ReadLine(File, &Line[0], LINE_LENGTH);
     if (Error) {
@@ -251,7 +251,6 @@ internal inline u32 MM_ReadFile(FILE *File, matrix_market *MatrixMarket) {
       MatrixMarket->Rows[I]--;
       MatrixMarket->Columns[I]--;
     } else if (MatrixMarket->Header.Field == PATTERN) {
-      // TODO(miha): See how pattern numbers are implemented.
       if (sscanf(Line, "%u %u", &MatrixMarket->Rows[I],
                  &MatrixMarket->Columns[I]) != 2) {
         return SSCANF_ERR;
@@ -272,7 +271,7 @@ internal inline u32 MM_ReadFile(FILE *File, matrix_market *MatrixMarket) {
 // NOTE(miha): Some matrices have symetric MM format, this means only elements
 // on or above diagonal are inputed. This function insert "missing" elements
 // below the diagonal line.
-u32 MM_InsertSymetricValues(matrix_market *MatrixMarket) {
+internal inline u32 MM_InsertSymetricValues(matrix_market *MatrixMarket) {
   u32 Error;
   char Line[LINE_LENGTH];
 
