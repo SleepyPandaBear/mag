@@ -1,0 +1,241 @@
+
+
+================================================================
+== Synthesis Summary Report of 'kernel'
+================================================================
++ General Information: 
+    * Date:           Thu Jan 25 21:42:44 2024
+    * Version:        2022.1 (Build 3526262 on Mon Apr 18 15:47:01 MDT 2022)
+    * Project:        spmv_hls
+    * Solution:       solution (Vitis Kernel Flow Target)
+    * Product family: virtexuplus
+    * Target device:  xcu250-figd2104-2L-e
+    
+
++ Performance & Resource Estimates: 
+    
+    PS: '+' for module; 'o' for loop; '*' for dataflow
+    +--------------------+------+------+---------+--------+----------+---------+------+----------+------+----------+-------------+------------+-----+
+    |       Modules      | Issue|      | Latency | Latency| Iteration|         | Trip |          |      |          |             |            |     |
+    |       & Loops      | Type | Slack| (cycles)|  (ns)  |  Latency | Interval| Count| Pipelined| BRAM |    DSP   |      FF     |     LUT    | URAM|
+    +--------------------+------+------+---------+--------+----------+---------+------+----------+------+----------+-------------+------------+-----+
+    |+ kernel            |     -|  0.00|        -|       -|         -|        -|     -|        no|     -|  192 (1%)|  20498 (~0%)|  31418 (1%)|    -|
+    | o VITIS_LOOP_27_1  |    II|  7.30|        -|       -|       216|      141|     -|       yes|     -|         -|            -|           -|    -|
+    +--------------------+------+------+---------+--------+----------+---------+------+----------+------+----------+-------------+------------+-----+
+
+
+================================================================
+== HW Interfaces
+================================================================
+* M_AXI
++-------------+--------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+
+| Interface   | Data Width   | Address Width | Latency | Offset | Register | Max Widen | Max Read     | Max Write    | Num Read    | Num Write   |
+|             | (SW->HW)     |               |         |        |          | Bitwidth  | Burst Length | Burst Length | Outstanding | Outstanding |
++-------------+--------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+
+| m_axi_gmem0 | 2112 -> 1024 | 64            | 64      | slave  | 0        | 512       | 16           | 16           | 16          | 16          |
+| m_axi_gmem1 | 32 -> 256    | 64            | 64      | slave  | 0        | 512       | 16           | 16           | 16          | 16          |
+| m_axi_gmem2 | 32 -> 256    | 64            | 64      | slave  | 0        | 512       | 16           | 16           | 16          | 16          |
++-------------+--------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+
+
+* S_AXILITE Interfaces
++---------------+------------+---------------+--------+----------+
+| Interface     | Data Width | Address Width | Offset | Register |
++---------------+------------+---------------+--------+----------+
+| s_axi_control | 32         | 6             | 16     | 0        |
++---------------+------------+---------------+--------+----------+
+
+* S_AXILITE Registers
++---------------+----------+--------+-------+--------+----------------------------------+------------------------------------------------------------------------------------+
+| Interface     | Register | Offset | Width | Access | Description                      | Bit Fields                                                                         |
++---------------+----------+--------+-------+--------+----------------------------------+------------------------------------------------------------------------------------+
+| s_axi_control | CTRL     | 0x00   | 32    | RW     | Control signals                  | 0=AP_START 1=AP_DONE 2=AP_IDLE 3=AP_READY 4=AP_CONTINUE 7=AUTO_RESTART 9=INTERRUPT |
+| s_axi_control | GIER     | 0x04   | 32    | RW     | Global Interrupt Enable Register | 0=Enable                                                                           |
+| s_axi_control | IP_IER   | 0x08   | 32    | RW     | IP Interrupt Enable Register     | 0=CHAN0_INT_EN 1=CHAN1_INT_EN                                                      |
+| s_axi_control | IP_ISR   | 0x0c   | 32    | RW     | IP Interrupt Status Register     | 0=CHAN0_INT_ST 1=CHAN1_INT_ST                                                      |
+| s_axi_control | Blocks_1 | 0x10   | 32    | W      | Data signal of Blocks            |                                                                                    |
+| s_axi_control | Blocks_2 | 0x14   | 32    | W      | Data signal of Blocks            |                                                                                    |
+| s_axi_control | N        | 0x1c   | 32    | W      | Data signal of N                 |                                                                                    |
+| s_axi_control | In_r_1   | 0x24   | 32    | W      | Data signal of In_r              |                                                                                    |
+| s_axi_control | In_r_2   | 0x28   | 32    | W      | Data signal of In_r              |                                                                                    |
+| s_axi_control | Out_r_1  | 0x30   | 32    | W      | Data signal of Out_r             |                                                                                    |
+| s_axi_control | Out_r_2  | 0x34   | 32    | W      | Data signal of Out_r             |                                                                                    |
++---------------+----------+--------+-------+--------+----------------------------------+------------------------------------------------------------------------------------+
+
+* TOP LEVEL CONTROL
++-----------+---------------+-----------+
+| Interface | Type          | Ports     |
++-----------+---------------+-----------+
+| ap_clk    | clock         | ap_clk    |
+| ap_rst_n  | reset         | ap_rst_n  |
+| interrupt | interrupt     | interrupt |
+| ap_ctrl   | ap_ctrl_chain |           |
++-----------+---------------+-----------+
+
+
+================================================================
+== SW I/O Information
+================================================================
+* Top Function Arguments
++----------+-----------+----------+
+| Argument | Direction | Datatype |
++----------+-----------+----------+
+| Blocks   | in        | block*   |
+| N        | in        | int      |
+| In       | in        | int*     |
+| Out      | inout     | int*     |
++----------+-----------+----------+
+
+* SW-to-HW Mapping
++----------+---------------+-----------+----------+------------------------------------+
+| Argument | HW Interface  | HW Type   | HW Usage | HW Info                            |
++----------+---------------+-----------+----------+------------------------------------+
+| Blocks   | m_axi_gmem0   | interface |          |                                    |
+| Blocks   | s_axi_control | register  | offset   | name=Blocks_1 offset=0x10 range=32 |
+| Blocks   | s_axi_control | register  | offset   | name=Blocks_2 offset=0x14 range=32 |
+| N        | s_axi_control | register  |          | name=N offset=0x1c range=32        |
+| In       | m_axi_gmem1   | interface |          |                                    |
+| In       | s_axi_control | interface | offset   |                                    |
+| Out      | m_axi_gmem2   | interface |          |                                    |
+| Out      | s_axi_control | interface | offset   |                                    |
++----------+---------------+-----------+----------+------------------------------------+
+
+
+================================================================
+== M_AXI Burst Information
+================================================================
+ Note: All burst requests might be further partitioned into multiple requests during RTL generation based on max_read_burst_length or max_write_burst_length settings.
+
+* Inferred Burst Summary
++--------------+-----------+--------+-------+--------------------------+
+| HW Interface | Direction | Length | Width | Location                 |
++--------------+-----------+--------+-------+--------------------------+
+| m_axi_gmem0  | read      | 3      | 1024  | ../code/kernel.cpp:29:23 |
++--------------+-----------+--------+-------+--------------------------+
+
+* Inferred Bursts and Widening Missed
++--------------+----------+-----------------+---------------------------+------------+--------------------------+
+| HW Interface | Variable | Loop            | Problem                   | Resolution | Location                 |
++--------------+----------+-----------------+---------------------------+------------+--------------------------+
+| m_axi_gmem1  | In       | VITIS_LOOP_27_1 | Could not analyze pattern | 214-229    | ../code/kernel.cpp:27:19 |
+| m_axi_gmem2  | Out      | VITIS_LOOP_27_1 | Could not analyze pattern | 214-229    | ../code/kernel.cpp:27:19 |
+| m_axi_gmem2  | Out      | VITIS_LOOP_27_1 | Could not analyze pattern | 214-229    | ../code/kernel.cpp:27:19 |
++--------------+----------+-----------------+---------------------------+------------+--------------------------+
+
+    * Resolution URL: www.xilinx.com/cgi-bin/docs/rdoc?v=2022.1;t=hls+guidance;d=XXX-YYY.html (replace XXX-YYY with column value)
+
+================================================================
+== Bind Op Report
+================================================================
++--------------------------+-----+--------+-------------+-----+--------+---------+
+| Name                     | DSP | Pragma | Variable    | Op  | Impl   | Latency |
++--------------------------+-----+--------+-------------+-----+--------+---------+
+| + kernel                 | 192 |        |             |     |        |         |
+|   add_ln27_fu_477_p2     | -   |        | add_ln27    | add | fabric | 0       |
+|   add_ln29_2_fu_530_p2   | -   |        | add_ln29_2  | add | fabric | 0       |
+|   add_ln34_fu_616_p2     | -   |        | add_ln34    | add | fabric | 0       |
+|   add_ln38_fu_727_p2     | -   |        | add_ln38    | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U1  | 3   |        | mul_ln11    | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U2  | 3   |        | mul_ln11_1  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U3  | 3   |        | mul_ln11_2  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U4  | 3   |        | mul_ln11_3  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U5  | 3   |        | mul_ln11_4  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U6  | 3   |        | mul_ln11_5  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U7  | 3   |        | mul_ln11_6  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U8  | 3   |        | mul_ln11_7  | mul | auto   | 0       |
+|   add_ln11_fu_1492_p2    | -   |        | add_ln11    | add | fabric | 0       |
+|   add_ln11_1_fu_1497_p2  | -   |        | add_ln11_1  | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U9  | 3   |        | mul_ln11_8  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U10 | 3   |        | mul_ln11_9  | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U11 | 3   |        | mul_ln11_10 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U12 | 3   |        | mul_ln11_11 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U13 | 3   |        | mul_ln11_12 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U14 | 3   |        | mul_ln11_13 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U15 | 3   |        | mul_ln11_14 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U16 | 3   |        | mul_ln11_15 | mul | auto   | 0       |
+|   add_ln11_8_fu_1571_p2  | -   |        | add_ln11_8  | add | fabric | 0       |
+|   add_ln11_9_fu_1576_p2  | -   |        | add_ln11_9  | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U17 | 3   |        | mul_ln11_16 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U18 | 3   |        | mul_ln11_17 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U19 | 3   |        | mul_ln11_18 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U20 | 3   |        | mul_ln11_19 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U21 | 3   |        | mul_ln11_20 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U22 | 3   |        | mul_ln11_21 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U23 | 3   |        | mul_ln11_22 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U24 | 3   |        | mul_ln11_23 | mul | auto   | 0       |
+|   add_ln11_16_fu_1650_p2 | -   |        | add_ln11_16 | add | fabric | 0       |
+|   add_ln11_17_fu_1655_p2 | -   |        | add_ln11_17 | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U25 | 3   |        | mul_ln11_24 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U26 | 3   |        | mul_ln11_25 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U27 | 3   |        | mul_ln11_26 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U28 | 3   |        | mul_ln11_27 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U29 | 3   |        | mul_ln11_28 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U30 | 3   |        | mul_ln11_29 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U31 | 3   |        | mul_ln11_30 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U32 | 3   |        | mul_ln11_31 | mul | auto   | 0       |
+|   add_ln11_24_fu_1729_p2 | -   |        | add_ln11_24 | add | fabric | 0       |
+|   add_ln11_25_fu_1734_p2 | -   |        | add_ln11_25 | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U33 | 3   |        | mul_ln11_32 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U34 | 3   |        | mul_ln11_33 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U35 | 3   |        | mul_ln11_34 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U36 | 3   |        | mul_ln11_35 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U37 | 3   |        | mul_ln11_36 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U38 | 3   |        | mul_ln11_37 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U39 | 3   |        | mul_ln11_38 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U40 | 3   |        | mul_ln11_39 | mul | auto   | 0       |
+|   add_ln11_32_fu_1808_p2 | -   |        | add_ln11_32 | add | fabric | 0       |
+|   add_ln11_33_fu_1813_p2 | -   |        | add_ln11_33 | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U41 | 3   |        | mul_ln11_40 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U42 | 3   |        | mul_ln11_41 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U43 | 3   |        | mul_ln11_42 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U44 | 3   |        | mul_ln11_43 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U45 | 3   |        | mul_ln11_44 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U46 | 3   |        | mul_ln11_45 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U47 | 3   |        | mul_ln11_46 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U48 | 3   |        | mul_ln11_47 | mul | auto   | 0       |
+|   add_ln11_40_fu_1887_p2 | -   |        | add_ln11_40 | add | fabric | 0       |
+|   add_ln11_41_fu_1892_p2 | -   |        | add_ln11_41 | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U49 | 3   |        | mul_ln11_48 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U50 | 3   |        | mul_ln11_49 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U51 | 3   |        | mul_ln11_50 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U52 | 3   |        | mul_ln11_51 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U53 | 3   |        | mul_ln11_52 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U54 | 3   |        | mul_ln11_53 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U55 | 3   |        | mul_ln11_54 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U56 | 3   |        | mul_ln11_55 | mul | auto   | 0       |
+|   add_ln11_48_fu_1966_p2 | -   |        | add_ln11_48 | add | fabric | 0       |
+|   add_ln11_49_fu_1971_p2 | -   |        | add_ln11_49 | add | fabric | 0       |
+|   mul_32s_32s_32_1_1_U57 | 3   |        | mul_ln11_56 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U58 | 3   |        | mul_ln11_57 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U59 | 3   |        | mul_ln11_58 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U60 | 3   |        | mul_ln11_59 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U61 | 3   |        | mul_ln11_60 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U62 | 3   |        | mul_ln11_61 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U63 | 3   |        | mul_ln11_62 | mul | auto   | 0       |
+|   mul_32s_32s_32_1_1_U64 | 3   |        | mul_ln11_63 | mul | auto   | 0       |
+|   add_ln11_56_fu_2045_p2 | -   |        | add_ln11_56 | add | fabric | 0       |
+|   add_ln11_57_fu_2050_p2 | -   |        | add_ln11_57 | add | fabric | 0       |
++--------------------------+-----+--------+-------------+-----+--------+---------+
+
+
+================================================================
+== Bind Storage Report
+================================================================
+  No bind storage info in design
+
+================================================================
+== Pragma Report
+================================================================
+* Valid Pragma Syntax
++-----------+---------------------------------------------------+---------------------------------+
+| Type      | Options                                           | Location                        |
++-----------+---------------------------------------------------+---------------------------------+
+| interface | m_axi port = Blocks bundle = gmem0 offset = slave | ../code/kernel.cpp:18 in kernel |
+| interface | m_axi port = In bundle = gmem1 offset = slave     | ../code/kernel.cpp:19 in kernel |
+| interface | m_axi port = Out bundle = gmem2 offset = slave    | ../code/kernel.cpp:20 in kernel |
+| interface | s_axilite port = N                                | ../code/kernel.cpp:22 in kernel |
+| interface | s_axilite port = In                               | ../code/kernel.cpp:23 in kernel |
+| interface | s_axilite port = Out                              | ../code/kernel.cpp:24 in kernel |
+| interface | s_axilite port = return                           | ../code/kernel.cpp:25 in kernel |
++-----------+---------------------------------------------------+---------------------------------+
+
+
