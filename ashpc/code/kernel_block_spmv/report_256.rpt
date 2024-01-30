@@ -4,7 +4,7 @@
 == Synthesis Summary Report of 'kernel_block_spmv'
 ================================================================
 + General Information: 
-    * Date:           Tue Jan 30 19:02:32 2024
+    * Date:           Tue Jan 30 16:53:53 2024
     * Version:        2022.1 (Build 3526262 on Mon Apr 18 15:47:01 MDT 2022)
     * Project:        spmv_hls
     * Solution:       solution (Vitis Kernel Flow Target)
@@ -15,20 +15,20 @@
 + Performance & Resource Estimates: 
     
     PS: '+' for module; 'o' for loop; '*' for dataflow
-    +-----------------------------------------------+------+------+---------+-----------+----------+---------+--------+----------+----------+---------+-------------+------------+-----+
-    |                    Modules                    | Issue|      | Latency |  Latency  | Iteration|         |  Trip  |          |          |         |             |            |     |
-    |                    & Loops                    | Type | Slack| (cycles)|    (ns)   |  Latency | Interval|  Count | Pipelined|   BRAM   |   DSP   |      FF     |     LUT    | URAM|
-    +-----------------------------------------------+------+------+---------+-----------+----------+---------+--------+----------+----------+---------+-------------+------------+-----+
-    |+ kernel_block_spmv                            |     -|  0.00|   524367|  5.244e+06|         -|   524368|       -|        no|  18 (~0%)|  3 (~0%)|  17453 (~0%)|  25679 (1%)|    -|
-    | + kernel_block_spmv_Pipeline_l_read_elements  |     -|  0.00|   262147|  2.621e+06|         -|   262147|       -|        no|         -|        -|   1058 (~0%)|   125 (~0%)|    -|
-    |  o l_read_elements                            |     -|  7.30|   262145|  2.621e+06|         3|        1|  262144|       yes|         -|        -|            -|           -|    -|
-    | + kernel_block_spmv_Pipeline_l_read_in        |     -|  0.00|      515|  5.150e+03|         -|      515|       -|        no|         -|        -|   1031 (~0%)|   113 (~0%)|    -|
-    |  o l_read_in                                  |     -|  7.30|      513|  5.130e+03|         3|        1|     512|       yes|         -|        -|            -|           -|    -|
-    | + kernel_block_spmv_Pipeline_l_read_out       |     -|  0.00|      515|  5.150e+03|         -|      515|       -|        no|         -|        -|   1031 (~0%)|   113 (~0%)|    -|
-    |  o l_read_out                                 |     -|  7.30|      513|  5.130e+03|         3|        1|     512|       yes|         -|        -|            -|           -|    -|
-    | + kernel_block_spmv_Pipeline_l_block_spmv     |     -|  0.81|   262146|  2.621e+06|         -|   262146|       -|        no|         -|  3 (~0%)|    129 (~0%)|   216 (~0%)|    -|
-    |  o l_block_spmv                               |     -|  7.30|   262144|  2.621e+06|         2|        1|  262144|       yes|         -|        -|            -|           -|    -|
-    +-----------------------------------------------+------+------+---------+-----------+----------+---------+--------+----------+----------+---------+-------------+------------+-----+
+    +-----------------------------------------------+------+------+---------+-----------+----------+---------+-------+----------+----------+---------+-------------+------------+-----+
+    |                    Modules                    | Issue|      | Latency |  Latency  | Iteration|         |  Trip |          |          |         |             |            |     |
+    |                    & Loops                    | Type | Slack| (cycles)|    (ns)   |  Latency | Interval| Count | Pipelined|   BRAM   |   DSP   |      FF     |     LUT    | URAM|
+    +-----------------------------------------------+------+------+---------+-----------+----------+---------+-------+----------+----------+---------+-------------+------------+-----+
+    |+ kernel_block_spmv                            |     -|  0.00|   131151|  1.312e+06|         -|   131152|      -|        no|  18 (~0%)|  3 (~0%)|  17438 (~0%)|  25671 (1%)|    -|
+    | + kernel_block_spmv_Pipeline_l_read_elements  |     -|  0.00|    65539|  6.554e+05|         -|    65539|      -|        no|         -|        -|   1052 (~0%)|   122 (~0%)|    -|
+    |  o l_read_elements                            |     -|  7.30|    65537|  6.554e+05|         3|        1|  65536|       yes|         -|        -|            -|           -|    -|
+    | + kernel_block_spmv_Pipeline_l_read_in        |     -|  0.00|      259|  2.590e+03|         -|      259|      -|        no|         -|        -|   1028 (~0%)|   112 (~0%)|    -|
+    |  o l_read_in                                  |     -|  7.30|      257|  2.570e+03|         3|        1|    256|       yes|         -|        -|            -|           -|    -|
+    | + kernel_block_spmv_Pipeline_l_read_out       |     -|  0.00|      259|  2.590e+03|         -|      259|      -|        no|         -|        -|   1028 (~0%)|   112 (~0%)|    -|
+    |  o l_read_out                                 |     -|  7.30|      257|  2.570e+03|         3|        1|    256|       yes|         -|        -|            -|           -|    -|
+    | + kernel_block_spmv_Pipeline_l_block_spmv     |     -|  0.81|    65538|  6.554e+05|         -|    65538|      -|        no|         -|  3 (~0%)|    126 (~0%)|   213 (~0%)|    -|
+    |  o l_block_spmv                               |     -|  7.30|    65536|  6.554e+05|         2|        1|  65536|       yes|         -|        -|            -|           -|    -|
+    +-----------------------------------------------+------+------+---------+-----------+----------+---------+-------+----------+----------+---------+-------------+------------+-----+
 
 
 ================================================================
@@ -113,30 +113,30 @@
 +--------------+-----------+--------+-------+-------------------------+
 | HW Interface | Direction | Length | Width | Location                |
 +--------------+-----------+--------+-------+-------------------------+
-| m_axi_gmem1  | read      | 16384  | 512   | ../code/kernel.cpp:85:5 |
-| m_axi_gmem2  | read      | 32     | 512   | ../code/kernel.cpp:90:5 |
-| m_axi_gmem3  | read      | 32     | 512   | ../code/kernel.cpp:95:5 |
+| m_axi_gmem1  | read      | 4096   | 512   | ../code/kernel.cpp:18:5 |
+| m_axi_gmem2  | read      | 16     | 512   | ../code/kernel.cpp:23:5 |
+| m_axi_gmem3  | read      | 16     | 512   | ../code/kernel.cpp:28:5 |
 +--------------+-----------+--------+-------+-------------------------+
 
 
 ================================================================
 == Bind Op Report
 ================================================================
-+-----------------------------------------------+-----+--------+-----------+-----+--------+---------+
-| Name                                          | DSP | Pragma | Variable  | Op  | Impl   | Latency |
-+-----------------------------------------------+-----+--------+-----------+-----+--------+---------+
-| + kernel_block_spmv                           | 3   |        |           |     |        |         |
-|  + kernel_block_spmv_Pipeline_l_read_elements | 0   |        |           |     |        |         |
-|    add_ln85_fu_126_p2                         | -   |        | add_ln85  | add | fabric | 0       |
-|  + kernel_block_spmv_Pipeline_l_read_in       | 0   |        |           |     |        |         |
-|    add_ln90_fu_126_p2                         | -   |        | add_ln90  | add | fabric | 0       |
-|  + kernel_block_spmv_Pipeline_l_read_out      | 0   |        |           |     |        |         |
-|    add_ln95_fu_126_p2                         | -   |        | add_ln95  | add | fabric | 0       |
-|  + kernel_block_spmv_Pipeline_l_block_spmv    | 3   |        |           |     |        |         |
-|    add_ln99_fu_119_p2                         | -   |        | add_ln99  | add | fabric | 0       |
-|    mul_32s_32s_32_1_1_U10                     | 3   |        | mul_ln103 | mul | auto   | 0       |
-|    add_ln103_fu_189_p2                        | -   |        | add_ln103 | add | fabric | 0       |
-+-----------------------------------------------+-----+--------+-----------+-----+--------+---------+
++-----------------------------------------------+-----+--------+----------+-----+--------+---------+
+| Name                                          | DSP | Pragma | Variable | Op  | Impl   | Latency |
++-----------------------------------------------+-----+--------+----------+-----+--------+---------+
+| + kernel_block_spmv                           | 3   |        |          |     |        |         |
+|  + kernel_block_spmv_Pipeline_l_read_elements | 0   |        |          |     |        |         |
+|    add_ln18_fu_126_p2                         | -   |        | add_ln18 | add | fabric | 0       |
+|  + kernel_block_spmv_Pipeline_l_read_in       | 0   |        |          |     |        |         |
+|    add_ln23_fu_126_p2                         | -   |        | add_ln23 | add | fabric | 0       |
+|  + kernel_block_spmv_Pipeline_l_read_out      | 0   |        |          |     |        |         |
+|    add_ln28_fu_126_p2                         | -   |        | add_ln28 | add | fabric | 0       |
+|  + kernel_block_spmv_Pipeline_l_block_spmv    | 3   |        |          |     |        |         |
+|    add_ln32_fu_119_p2                         | -   |        | add_ln32 | add | fabric | 0       |
+|    mul_32s_32s_32_1_1_U10                     | 3   |        | mul_ln36 | mul | auto   | 0       |
+|    add_ln36_fu_189_p2                         | -   |        | add_ln36 | add | fabric | 0       |
++-----------------------------------------------+-----+--------+----------+-----+--------+---------+
 
 
 ================================================================
@@ -159,13 +159,13 @@
 +-----------+-----------------------------------------------------+--------------------------------------------+
 | Type      | Options                                             | Location                                   |
 +-----------+-----------------------------------------------------+--------------------------------------------+
-| interface | m_axi port = Elements bundle = gmem1 offset = slave | ../code/kernel.cpp:74 in kernel_block_spmv |
-| interface | m_axi port = In bundle = gmem2 offset = slave       | ../code/kernel.cpp:75 in kernel_block_spmv |
-| interface | m_axi port = Out bundle = gmem3 offset = slave      | ../code/kernel.cpp:76 in kernel_block_spmv |
-| interface | s_axilite port = Elements                           | ../code/kernel.cpp:78 in kernel_block_spmv |
-| interface | s_axilite port = In                                 | ../code/kernel.cpp:79 in kernel_block_spmv |
-| interface | s_axilite port = Out                                | ../code/kernel.cpp:80 in kernel_block_spmv |
-| interface | s_axilite port = return                             | ../code/kernel.cpp:81 in kernel_block_spmv |
+| interface | m_axi port = Elements bundle = gmem1 offset = slave | ../code/kernel.cpp:7 in kernel_block_spmv  |
+| interface | m_axi port = In bundle = gmem2 offset = slave       | ../code/kernel.cpp:8 in kernel_block_spmv  |
+| interface | m_axi port = Out bundle = gmem3 offset = slave      | ../code/kernel.cpp:9 in kernel_block_spmv  |
+| interface | s_axilite port = Elements                           | ../code/kernel.cpp:11 in kernel_block_spmv |
+| interface | s_axilite port = In                                 | ../code/kernel.cpp:12 in kernel_block_spmv |
+| interface | s_axilite port = Out                                | ../code/kernel.cpp:13 in kernel_block_spmv |
+| interface | s_axilite port = return                             | ../code/kernel.cpp:14 in kernel_block_spmv |
 +-----------+-----------------------------------------------------+--------------------------------------------+
 
 

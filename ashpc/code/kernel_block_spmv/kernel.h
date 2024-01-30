@@ -5,7 +5,7 @@
 
 typedef hls::vector<int, 8> vtype;
 
-#define BLOCK_SIZE (512)
+#define BLOCK_SIZE (32)
 
 struct block {
     int Row;
