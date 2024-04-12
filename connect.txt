@@ -1,0 +1,2 @@
+salloc -N1 -c2 -C fpga --reservation=fri --time=03:00:00
+ssh -X nsc-vfp001
