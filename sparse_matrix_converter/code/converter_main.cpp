@@ -1,92 +1,59 @@
 /*********************************************
-* File - converter_main.cpp
-* Author - Miha
-* Created - 26 jun 2023
-* Description - 
-* *******************************************/
+ * File - converter_main.cpp
+ * Author - Miha
+ * Created - 26 jun 2023
+ * Description -
+ * *******************************************/
 #include "converter_main.h"
 #include "converter_read_matrix_market.h"
 // TODO(miha): Combine together converter and blas header files.
-#include "converter_coo.h"
-#include "converter_csr.h"
-#include "converter_ell.h"
-#include "converter_sell.h"
 #include "blas.h"
+#include "blas_bcoo.h"
 #include "blas_coo.h"
 #include "blas_csr.h"
 #include "blas_ell.h"
+#include "converter_block_coo.h"
+#include "converter_coo.h"
+#include "converter_csr.h"
+#include "converter_dia.h"
+#include "converter_ell.h"
+#include "converter_sell.h"
 
-int
-main()
-{
-    // FILE *File = fopen("494_bus.mtx", "r");
-    FILE *File = fopen("test_matrix.mtx", "r");
-    matrix_market MatrixMarket = {};
-    MM_ReadFile(File, &MatrixMarket);
-    MM_PrintHeader(&MatrixMarket.Header);
+int main() {
+  // FILE *File = fopen("494_bus.mtx", "r");
+  FILE *File = fopen("dwt_512.mtx", "r");
+  matrix_market MatrixMarket = {};
+  MM_ReadFile(File, &MatrixMarket);
+  MM_PrintHeader(&MatrixMarket.Header);
+  MM_InsertSymetricValues(&MatrixMarket);
 
-    coo COO = {};
-    COO_ConvertFromMatrixMarket(&COO, &MatrixMarket);
+  // TODO:
+  //   - MatrixMarket convert formats
+  //   - Converters output format
+  //   - better vectors/matrices, add type
+  //   -
+  //   -
 
-    csr CSR = {};
-    CSR_ConvertFromMatrixMarket(&CSR, &MatrixMarket);
+  bcoo BCOO = {};
+  BCOO.BlockWidth = 8;
+  BCOO.BlockHeight = 8;
 
-    ell ELL = {};
-    ELL_ConvertFromMatrixMarket(&ELL, &MatrixMarket);
+#define N 512
 
-    //sell SELL = {};
-    //SELL_ConvertFromMatrixMarket(&SELL, &MatrixMarket);
-    
-    vector In = {};
-    In.Length = 4;
-    In.Field = REAL;
-    In.FieldSize = 4;
-    In.Elements = malloc(In.Length * In.FieldSize);
-    ((f32 *)In.Elements)[0] = 1.0f;
-    ((f32 *)In.Elements)[1] = 2.0f;
-    ((f32 *)In.Elements)[2] = 3.0f;
-    ((f32 *)In.Elements)[3] = 4.0f;
+  coo COO = {};
+  COO_ConvertFromMatrixMarket(&COO, &MatrixMarket);
 
-    vector Out = {};
-    Out.Length = 5;
-    Out.Field = REAL;
-    Out.FieldSize = 4;
-    Out.Elements = malloc(Out.Length * Out.FieldSize);
-    ((f32 *)Out.Elements)[0] = 0.0f;
-    ((f32 *)Out.Elements)[1] = 0.0f;
-    ((f32 *)Out.Elements)[2] = 0.0f;
-    ((f32 *)Out.Elements)[3] = 0.0f;
-    ((f32 *)Out.Elements)[4] = 0.0f;
+  vector V_In = IdentityVector(N, sizeof(u32));
 
-    PrintVector(&In);
-    PrintVector(&Out);
-    printf("--------\n");
+  vector V_OutBCOO = ZeroVector(N, sizeof(u32));
+  BCOO_ConvertFromMatrixMarket(&BCOO, &MatrixMarket);
+  // BCOO_Print(&BCOO);
+  BCOO_SpMV(&BCOO, &V_In, &V_OutBCOO);
+  PrintVector(&V_OutBCOO);
 
-    //COO_SpMV(&COO, &In, &Out);
-    CSR_SpMV(&CSR, &In, &Out);
-    //ELL_SpMV(&ELL, &In, &Out);
+  vector V_OutCOO = ZeroVector(N, sizeof(u32));
+  COO_SpMV(&COO, &V_In, &V_OutCOO);
+  PrintVector(&V_OutCOO);
 
-    PrintVector(&Out);
-
-    /*
-    PrintVector(&Out);
-    vector RVector = RandomVector(4, 4);
-    PrintVector(&RVector);
-    vector IVector = IdentityVector(4, 4);
-    PrintVector(&IVector);
-
-    matrix M = IdentityMatrix(4, 4);
-    PrintMatrix(&M);
-    
-    matrix R = RandomMatrix(4, 4, 4, 0);
-    PrintMatrix(&R);
-
-    MatrixVectorMultiply(&R, &In, &Out);
-    PrintVector(&Out);
-
-    matrix S = RandomSparseMatrix(4, 4, 0.5f);
-    PrintMatrix(&S);
-    */
-
-    fclose(File);
+  fclose(File);
 }

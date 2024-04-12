@@ -1,13 +1,13 @@
 /*********************************************
-* File - converter_csr.cpp
-* Author - Miha
-* Created - 04 jul 2023
-* Description - 
-* *******************************************/
+ * File - converter_csr.cpp
+ * Author - Miha
+ * Created - 04 jul 2023
+ * Description -
+ * *******************************************/
+#include "converter_read_matrix_market.h"
+
 #if !defined(CONVERTER_CSR_H)
 #define CONVERTER_CSR_H
-
-#include "converter_read_matrix_market.h"
 
 struct csr
 {
@@ -15,41 +15,40 @@ struct csr
     void *Columns;
     void *Elements;
 
-    matrix_market_object Object;
-    matrix_market_format Format;
-    matrix_market_field Field;
-    matrix_market_symmetry Symmetry;
-
-    u32 FieldSize;
-
-    u32 NumberOfRows;
-    u32 NumberOfColumns;
-    u32 NonZeroElements;
+    matrix_market_header Header;
 };
 
-u32
+struct csr_fgpa
+{
+    u32 *RowPointers;
+    u32 *Columns;
+    dtype *Elements;
+
+    matrix_market_header Header;
+};
+
+internal inline u32
 CSR_ConvertFromMatrixMarket(csr *CSR, matrix_market *MatrixMarket)
 {
-    CSR->RowPointers = malloc((MatrixMarket->Header.NumberOfRows+1) * MatrixMarket->Header.FieldSize);
-    if(CSR->RowPointers == NULL)
-    {
-        return MALLOC_ERR;
-    }
-    Memset(CSR->RowPointers, 0, (MatrixMarket->Header.NumberOfRows+1) * MatrixMarket->Header.FieldSize); 
-    CSR->Columns = malloc(MatrixMarket->Header.NonZeroElements * MatrixMarket->Header.FieldSize);
-    if(CSR->Columns == NULL)
-    {
-        return MALLOC_ERR;
-    }
-    CSR->Elements = malloc(MatrixMarket->Header.NonZeroElements * MatrixMarket->Header.FieldSize);
-    if(CSR->Elements == NULL)
-    {
-        return MALLOC_ERR;
-    }
+    CSR->Header = MatrixMarket->Header;
+    matrix_market_header *Header = &CSR->Header;
 
-    for(u32 I = 0; I < MatrixMarket->Header.NonZeroElements; ++I)
+    CSR->RowPointers = malloc((Header->NumberOfRows + 1) * Header->FieldSize);
+    if(CSR->RowPointers == NULL)
+        return MALLOC_ERR;
+    Memset(CSR->RowPointers, 0, (Header->NumberOfRows + 1) * Header->FieldSize);
+
+    CSR->Columns = malloc(Header->NonZeroElements * Header->FieldSize);
+    if(CSR->Columns == NULL)
+        return MALLOC_ERR;
+
+    CSR->Elements = malloc(Header->NonZeroElements * Header->FieldSize);
+    if(CSR->Elements == NULL)
+        return MALLOC_ERR;
+
+    for(u32 I = 0; I < Header->NonZeroElements; ++I)
     {
-        if(MatrixMarket->Header.FieldSize == 4)
+        if(Header->FieldSize == 4)
         {
             MM_ToArray(CSR->RowPointers, u32)[MM_ToArray(MatrixMarket->Rows, u32)[I] + 1]++;
         }
@@ -62,24 +61,46 @@ CSR_ConvertFromMatrixMarket(csr *CSR, matrix_market *MatrixMarket)
             return UNKNOWN_VALUE_ERR;
         }
     }
-    for(u32 I = 1; I < MatrixMarket->Header.NumberOfRows+1; ++I)
-    {
-        MM_ToArray(CSR->RowPointers, u32)[I] += MM_ToArray(CSR->RowPointers, u32)[I-1];
-    }
 
-    u32 Length = MatrixMarket->Header.NonZeroElements * MatrixMarket->Header.FieldSize;
+    for(u32 I = 1; I < Header->NumberOfRows + 1; ++I)
+        MM_ToArray(CSR->RowPointers, u32)[I] += MM_ToArray(CSR->RowPointers, u32)[I - 1];
+
+    u32 Length = Header->NonZeroElements * Header->FieldSize;
     CopyMemory(CSR->Columns, MatrixMarket->Columns, Length);
     CopyMemory(CSR->Elements, MatrixMarket->Elements, Length);
 
-    CSR->FieldSize = MatrixMarket->Header.FieldSize;
-    CSR->NumberOfRows = MatrixMarket->Header.NumberOfRows;
-    CSR->NumberOfColumns = MatrixMarket->Header.NumberOfColumns;
-    CSR->NonZeroElements = MatrixMarket->Header.NonZeroElements;
+    return 0;
+}
 
-    CSR->Object = MatrixMarket->Header.Object;
-    CSR->Format = MatrixMarket->Header.Format;
-    CSR->Field = MatrixMarket->Header.Field;
-    CSR->Symmetry = MatrixMarket->Header.Symmetry;
+internal inline u32
+CSR_ConvertToFPGA(csr *CSR, csr_fgpa *CSR_FPGA)
+{
+#if !defined(dtype)
+    printf("Please define 'dtype'\n");
+    return 128;
+#endif
+
+    CSR_FPGA->Header = CSR->Header;
+
+    matrix_market_header *Header = &CSR->Header;
+
+    CSR_FPGA->RowPointers = (u32 *)malloc((Header->NumberOfRows + 1) * sizeof(u32));
+    if(CSR_FPGA->RowPointers == NULL)
+        return MALLOC_ERR;
+    for(i32 I = 0; I < Header->NumberOfRows + 1; ++I)
+        CSR_FPGA->RowPointers[I] = MM_ToArray(CSR->RowPointers, u32)[I];
+
+    CSR_FPGA->Columns = (u32 *)malloc(Header->NonZeroElements * sizeof(u32));
+    if(CSR_FPGA->Columns == NULL)
+        return MALLOC_ERR;
+    for(i32 I = 0; I < Header->NonZeroElements; ++I)
+        CSR_FPGA->Columns[I] = MM_ToArray(CSR->Columns, u32)[I];
+
+    CSR_FPGA->Elements = (dtype *)malloc(Header->NonZeroElements * sizeof(dtype));
+    if(CSR_FPGA->Elements == NULL)
+        return MALLOC_ERR;
+    for(i32 I = 0; I < Header->NonZeroElements; ++I)
+        CSR_FPGA->Elements[I] = MM_ToArray(CSR->Elements, dtype)[I];
 
     return 0;
 }

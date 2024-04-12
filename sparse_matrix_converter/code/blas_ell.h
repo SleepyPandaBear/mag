@@ -7,17 +7,18 @@
 #if !defined(BLAS_ELL_H)
 #define BLAS_ELL_H
 
+#include "converter_ell.h"
 #include "blas.h"
 
 u32
 ELL_SparseMatrixVectorMultiplication(ell *ELL, vector *In, vector *Out)
 {
-    for(u32 I = 0; I < ELL->NumberOfRows; ++I)
+    for(u32 I = 0; I < ELL->Header.NumberOfRows; ++I)
     {
-        for(u32 J = 0; J < ELL->NumberOfColumns; ++J)
+        for(u32 J = 0; J < ELL->ElementsPerRow; ++J)
         {
-            u32 ColumnIndex = ((u32 *)ELL->Columns)[J*ELL->NumberOfRows + I];
-            ((f32 *)Out->Elements)[I] += ((f32 *)ELL->Elements)[I*ELL->NumberOfColumns + J] * ((f32 *)In->Elements)[ColumnIndex];
+            u32 ColumnIndex = ((u32 *)ELL->Columns)[I*ELL->ElementsPerRow + J];
+            ((f32 *)Out->Elements)[I] += ((f32 *)ELL->Elements)[I*ELL->ElementsPerRow + J] * ((f32 *)In->Elements)[ColumnIndex];
         }
     }
 

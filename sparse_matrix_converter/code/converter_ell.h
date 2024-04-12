@@ -1,100 +1,115 @@
 /*********************************************
-* File - converter_ell.h
-* Author - Miha
-* Created - 05 jul 2023
-* Description - 
-* *******************************************/
+ * File - converter_ell.h
+ * Author - Miha
+ * Created - 05 jul 2023
+ * Description -
+ * *******************************************/
+#include "converter_read_matrix_market.h"
+
 #if !defined(CONVERTER_ELL_H)
 #define CONVERTER_ELL_H
 
-#include "converter_read_matrix_market.h"
-
 struct ell
 {
-    void *Columns;
+    u32 *Columns;
     void *Elements;
+    u32 ElementsPerRow;
 
-    matrix_market_object Object;
-    matrix_market_format Format;
-    matrix_market_field Field;
-    matrix_market_symmetry Symmetry;
-
-    u32 FieldSize;
-
-    u32 NumberOfRows;
-    u32 NumberOfColumns;
-    u32 NonZeroElements;
+    matrix_market_header Header;
 };
 
-u32
+struct ell_fpga
+{
+    u32 *Columns;
+    dtype *Elements;
+    u32 ElementsPerRow;
+
+    matrix_market_header Header;
+};
+
+internal inline u32
 ELL_ConvertFromMatrixMarket(ell *ELL, matrix_market *MatrixMarket)
 {
-    // NOTE(miha): Find ell columns width;
+    ELL->Header = MatrixMarket->Header;
+    matrix_market_header *Header = &ELL->Header;
+
+    // NOTE(miha): Find max column width.
+    // WARN(miha): Assumes that MatrixMarket is sorted by rows.
     u32 Max = 0;
     u32 Prev = 0;
-    for(u32 I = 1; I < MatrixMarket->Header.NonZeroElements; ++I)
+    for(u32 I = 1; I < Header->NonZeroElements; ++I)
     {
         u32 PrevRowEl = ((u32 *)MatrixMarket->Rows)[Prev];
         u32 CurrRowEl = ((u32 *)MatrixMarket->Rows)[I];
         // NOTE(miha): Row value is different.
         if(CurrRowEl != PrevRowEl)
         {
-            if((I-Prev) > Max)
+            if((I - Prev) > Max)
                 Max = I - Prev;
             Prev = I;
         }
     }
-    if((MatrixMarket->Header.NonZeroElements-Prev) > Max)
-        Max = MatrixMarket->Header.NonZeroElements-Prev;
+    if((Header->NonZeroElements - Prev) > Max)
+        Max = Header->NonZeroElements - Prev;
 
-    ELL->NumberOfRows = MatrixMarket->Header.NumberOfRows;
-    ELL->NumberOfColumns = Max;
-    ELL->FieldSize = MatrixMarket->Header.FieldSize;
+    ELL->ElementsPerRow = Max;
 
-    ELL->Columns = malloc(ELL->NumberOfRows * ELL->NumberOfColumns * ELL->FieldSize);
+    ELL->Columns = (u32 *)malloc(Header->NumberOfRows * ELL->ElementsPerRow * Header->FieldSize);
     if(ELL->Columns == NULL)
-    {
         return MALLOC_ERR;
-    }
-    ELL->Elements = malloc(ELL->NumberOfRows * ELL->NumberOfColumns * ELL->FieldSize);
+
+    ELL->Elements = malloc(Header->NumberOfRows * ELL->ElementsPerRow * Header->FieldSize);
     if(ELL->Elements == NULL)
-    {
         return MALLOC_ERR;
-    }
 
-    Prev = 0;
-    u32 CurrentRowLength = 0;
+    // NOTE(miha): Create Elements and Columns arrays. If Element exists insert
+    // it otherwise fill row with zeros.
     u32 Pad = 0;
-    for(u32 I = 1; I < MatrixMarket->Header.NonZeroElements+1; ++I)
+    for(u32 R = 0; R < Header->NumberOfRows; ++R)
     {
-        u32 PrevRowEl = ((u32 *)MatrixMarket->Rows)[Prev];
-        u32 CurrRowEl = ((u32 *)MatrixMarket->Rows)[I];
-
-        // f32 CurrElement = ((f32 *)MatrixMarket->Elements)[I-1-Pad];
-
-        ((f32 *)ELL->Elements)[I-1+Pad] = ((f32 *)MatrixMarket->Elements)[I-1];
-        ((u32 *)ELL->Columns)[I-1+Pad] = ((u32 *)MatrixMarket->Columns)[I-1];
-        CurrentRowLength++;
-
-        if(PrevRowEl != CurrRowEl)
+        for(u32 C = 0; C < ELL->ElementsPerRow; ++C)
         {
-            // NOTE(miha): Pad arrays with zeros.
-            while(CurrentRowLength < ELL->NumberOfColumns)
+            if(R == MatrixMarket->Rows[R * ELL->ElementsPerRow + C - Pad])
             {
-                ((f32 *)ELL->Elements)[I+Pad] = 0;
-                ((u32 *)ELL->Columns)[I+Pad] = 0;
-                Pad++;
-                CurrentRowLength++;
+                MM_ToArray(ELL->Elements, f32)[R * ELL->ElementsPerRow + C] = MM_ToArray(MatrixMarket->Elements, f32)[R * ELL->ElementsPerRow + C - Pad];
+                ELL->Columns[R * ELL->ElementsPerRow + C] = MatrixMarket->Columns[R * ELL->ElementsPerRow + C - Pad];
             }
-            CurrentRowLength = 0;
+            else
+            {
+                // NOTE(miha): Pad row with zeros.
+                MM_ToArray(ELL->Elements, f32)[R * ELL->ElementsPerRow + C] = 0.0f;
+                ELL->Columns[R * ELL->ElementsPerRow + C] = 0;
+                Pad++;
+            }
         }
-        Prev = I;
     }
 
-    ELL->Object = MatrixMarket->Header.Object;
-    ELL->Format = MatrixMarket->Header.Format;
-    ELL->Field = MatrixMarket->Header.Field;
-    ELL->Symmetry = MatrixMarket->Header.Symmetry;
+    return 0;
+}
+
+internal inline u32
+ELL_ConvertToFPGA(ell *ELL, ell_fpga *ELL_FPGA)
+{
+#if !defined(dtype)
+    printf("Please define 'dtype'\n");
+    return 128;
+#endif
+
+    ELL_FPGA->Header = ELL->Header;
+
+    matrix_market_header *Header = &ELL->Header;
+
+    ELL_FPGA->Columns = (u32 *)malloc(Header->NumberOfRows * ELL->ElementsPerRow * sizeof(u32));
+    if(ELL_FPGA->Columns == NULL)
+        return MALLOC_ERR;
+    for(i32 I = 0; I < Header->NumberOfRows * ELL->ElementsPerRow; ++I)
+        ELL_FPGA->Columns[I] = MM_ToArray(ELL->Columns, u32)[I];
+
+    ELL_FPGA->Elements = (dtype *)malloc(Header->NumberOfRows * ELL->ElementsPerRow * sizeof(dtype));
+    if(ELL_FPGA->Elements == NULL)
+        return MALLOC_ERR;
+    for(i32 I = 0; I < Header->NonZeroElements; ++I)
+        ELL_FPGA->Elements[I] = MM_ToArray(ELL->Elements, dtype)[I];
 
     return 0;
 }
