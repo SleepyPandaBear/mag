@@ -1,9 +1,9 @@
 /*********************************************
-* File - converter_ell.h
-* Author - Miha
-* Created - 05 jul 2023
-* Description - 
-* *******************************************/
+ * File - converter_ell.h
+ * Author - Miha
+ * Created - 05 jul 2023
+ * Description -
+ * *******************************************/
 #include "converter_read_matrix_market.h"
 
 #if !defined(CONVERTER_ELL_H)
@@ -13,6 +13,15 @@ struct ell
 {
     u32 *Columns;
     void *Elements;
+    u32 ElementsPerRow;
+
+    matrix_market_header Header;
+};
+
+struct ell_fpga
+{
+    u32 *Columns;
+    dtype *Elements;
     u32 ElementsPerRow;
 
     matrix_market_header Header;
@@ -35,13 +44,13 @@ ELL_ConvertFromMatrixMarket(ell *ELL, matrix_market *MatrixMarket)
         // NOTE(miha): Row value is different.
         if(CurrRowEl != PrevRowEl)
         {
-            if((I-Prev) > Max)
+            if((I - Prev) > Max)
                 Max = I - Prev;
             Prev = I;
         }
     }
-    if((Header->NonZeroElements-Prev) > Max)
-        Max = Header->NonZeroElements-Prev;
+    if((Header->NonZeroElements - Prev) > Max)
+        Max = Header->NonZeroElements - Prev;
 
     ELL->ElementsPerRow = Max;
 
@@ -60,20 +69,47 @@ ELL_ConvertFromMatrixMarket(ell *ELL, matrix_market *MatrixMarket)
     {
         for(u32 C = 0; C < ELL->ElementsPerRow; ++C)
         {
-            if(R == MatrixMarket->Rows[R*ELL->ElementsPerRow + C - Pad])
+            if(R == MatrixMarket->Rows[R * ELL->ElementsPerRow + C - Pad])
             {
-                MM_ToArray(ELL->Elements, f32)[R*ELL->ElementsPerRow + C] = MM_ToArray(MatrixMarket->Elements, f32)[R*ELL->ElementsPerRow + C - Pad];
-                ELL->Columns[R*ELL->ElementsPerRow + C] = MatrixMarket->Columns[R*ELL->ElementsPerRow+C-Pad];
+                MM_ToArray(ELL->Elements, f32)[R * ELL->ElementsPerRow + C] = MM_ToArray(MatrixMarket->Elements, f32)[R * ELL->ElementsPerRow + C - Pad];
+                ELL->Columns[R * ELL->ElementsPerRow + C] = MatrixMarket->Columns[R * ELL->ElementsPerRow + C - Pad];
             }
             else
             {
                 // NOTE(miha): Pad row with zeros.
-                MM_ToArray(ELL->Elements, f32)[R*ELL->ElementsPerRow + C] = 0.0f;
-                ELL->Columns[R*ELL->ElementsPerRow + C] = 0;
+                MM_ToArray(ELL->Elements, f32)[R * ELL->ElementsPerRow + C] = 0.0f;
+                ELL->Columns[R * ELL->ElementsPerRow + C] = 0;
                 Pad++;
             }
         }
     }
+
+    return 0;
+}
+
+internal inline u32
+ELL_ConvertToFPGA(ell *ELL, ell_fpga *ELL_FPGA)
+{
+#if !defined(dtype)
+    printf("Please define 'dtype'\n");
+    return 128;
+#endif
+
+    ELL_FPGA->Header = ELL->Header;
+
+    matrix_market_header *Header = &ELL->Header;
+
+    ELL_FPGA->Columns = (u32 *)malloc(Header->NumberOfRows * ELL->ElementsPerRow * sizeof(u32));
+    if(ELL_FPGA->Columns == NULL)
+        return MALLOC_ERR;
+    for(i32 I = 0; I < Header->NumberOfRows * ELL->ElementsPerRow; ++I)
+        ELL_FPGA->Columns[I] = MM_ToArray(ELL->Columns, u32)[I];
+
+    ELL_FPGA->Elements = (dtype *)malloc(Header->NumberOfRows * ELL->ElementsPerRow * sizeof(dtype));
+    if(ELL_FPGA->Elements == NULL)
+        return MALLOC_ERR;
+    for(i32 I = 0; I < Header->NonZeroElements; ++I)
+        ELL_FPGA->Elements[I] = MM_ToArray(ELL->Elements, dtype)[I];
 
     return 0;
 }

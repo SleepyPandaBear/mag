@@ -10,7 +10,8 @@
 #if !defined(CONVERTER_BLOCK_COO_H)
 #define CONVERTER_BLOCK_COO_H
 
-struct bcoo_block {
+struct bcoo_block
+{
     /* // NOTE(miha): We use column+(row*width) as index. */
     /* u32 Index; */
     u32 Row;
@@ -20,7 +21,8 @@ struct bcoo_block {
 };
 
 // NOTE(miha): Format COO is the same as read MatrixMarket format.
-struct bcoo {
+struct bcoo
+{
     matrix_market_header Header;
 
     bcoo_block *Blocks;
@@ -30,8 +32,7 @@ struct bcoo {
     u32 BlockHeight;
 };
 
-internal inline 
-i32
+internal inline i32
 FindBlockIndex(bcoo *BCOO, u32 Row, u32 Column)
 {
     u32 BlockRow = Row / BCOO->BlockWidth;
@@ -48,10 +49,9 @@ FindBlockIndex(bcoo *BCOO, u32 Row, u32 Column)
     return -1;
 }
 
-internal inline
-i32
+internal inline i32
 CreateBlock(bcoo *BCOO, u32 Row, u32 Column)
-{    
+{
     u32 BlockRow = Row / BCOO->BlockWidth;
     u32 BlockColumn = Column / BCOO->BlockHeight;
 
@@ -67,46 +67,47 @@ CreateBlock(bcoo *BCOO, u32 Row, u32 Column)
     {
         BCOO->BlockLength += 1;
         BCOO->Blocks = (bcoo_block *)realloc(BCOO->Blocks, BCOO->BlockLength * sizeof(bcoo_block));
-        BCOO->Blocks[BCOO->BlockLength-1].Elements = malloc(BCOO->BlockWidth * BCOO->BlockHeight * BCOO->Header.FieldSize);
-        BCOO->Blocks[BCOO->BlockLength-1].Row = BlockRow;
-        BCOO->Blocks[BCOO->BlockLength-1].Column = BlockColumn;
+        BCOO->Blocks[BCOO->BlockLength - 1].Elements = malloc(BCOO->BlockWidth * BCOO->BlockHeight * BCOO->Header.FieldSize);
+        BCOO->Blocks[BCOO->BlockLength - 1].Row = BlockRow;
+        BCOO->Blocks[BCOO->BlockLength - 1].Column = BlockColumn;
     }
 
-    return BCOO->BlockLength-1;
+    return BCOO->BlockLength - 1;
 }
 
-internal inline
-i32
+internal inline i32
 FindElementIndex(bcoo *BCOO, u32 Row, u32 Column)
-{    
+{
     u32 ElementRow = Row % BCOO->BlockWidth;
     u32 ElementColumn = Column % BCOO->BlockHeight;
-    
+
     return ElementColumn + (ElementRow * BCOO->BlockWidth);
 }
 
-int 
-BCOO_BlockCompare(const void* P1, const void* P2)
+int
+BCOO_BlockCompare(const void *P1, const void *P2)
 {
     bcoo_block B1 = *(bcoo_block *)P1;
     bcoo_block B2 = *(bcoo_block *)P2;
 
-    if(B1.Row < B2.Row) return -1;
-    else if(B1.Row > B2.Row) return 1;
+    if(B1.Row < B2.Row)
+        return -1;
+    else if(B1.Row > B2.Row)
+        return 1;
     else
     {
-        if(B1.Column < B2.Column) return -1;
-        else if(B1.Column > B2.Column) return 1;
+        if(B1.Column < B2.Column)
+            return -1;
+        else if(B1.Column > B2.Column)
+            return 1;
     }
 
     return 0;
 }
 
-internal inline 
-u32 
-BCOO_ConvertFromMatrixMarket(bcoo *BCOO, matrix_market *MatrixMarket) 
+internal inline u32
+BCOO_ConvertFromMatrixMarket(bcoo *BCOO, matrix_market *MatrixMarket)
 {
-
     // alloc max possible blocks
     // iterate MM, and put element to its block
     // iterate again, if block has 0
@@ -114,19 +115,30 @@ BCOO_ConvertFromMatrixMarket(bcoo *BCOO, matrix_market *MatrixMarket)
     BCOO->Header = MatrixMarket->Header;
 
     u32 Last = 0;
-    for (u32 I = 0; I < MatrixMarket->Header.NonZeroElements; ++I) {
+    for(u32 I = 0; I < MatrixMarket->Header.NonZeroElements; ++I)
+    {
         u32 Row = MM_ToArray(MatrixMarket->Rows, u32)[I];
         u32 Column = MM_ToArray(MatrixMarket->Columns, u32)[I];
         i32 BlockIndex = FindBlockIndex(BCOO, Row, Column);
         if(BlockIndex == -1)
             BlockIndex = CreateBlock(BCOO, Row, Column);
         i32 ElementIndex = FindElementIndex(BCOO, Row, Column);
-        if (MatrixMarket->Header.Field == REAL) {
-        } else if (MatrixMarket->Header.Field == DOUBLE) {
-        } else if (MatrixMarket->Header.Field == INTEGER) {
-        } else if (MatrixMarket->Header.Field == COMPLEX) {
-        } else if (MatrixMarket->Header.Field == PATTERN) {
-            u32 Element = MM_ToArray(MatrixMarket->Elements, u32)[I]; 
+        if(MatrixMarket->Header.Field == REAL)
+        {
+        }
+        else if(MatrixMarket->Header.Field == DOUBLE)
+        {
+        }
+        else if(MatrixMarket->Header.Field == INTEGER)
+        {
+        }
+        else if(MatrixMarket->Header.Field == COMPLEX)
+        {
+        }
+        else if(MatrixMarket->Header.Field == PATTERN)
+        {
+            u32 Element = MM_ToArray(MatrixMarket->Elements, u32)[I];
+
             MM_ToArray(BCOO->Blocks[BlockIndex].Elements, u32)[ElementIndex] = Element;
         }
     }
@@ -136,7 +148,7 @@ BCOO_ConvertFromMatrixMarket(bcoo *BCOO, matrix_market *MatrixMarket)
     return 0;
 }
 
-void
+internal inline void
 BCOO_Print(bcoo *BCOO)
 {
     for(u32 BlockIndex = 0; BlockIndex < BCOO->BlockLength; ++BlockIndex)
@@ -146,16 +158,24 @@ BCOO_Print(bcoo *BCOO)
         u32 ElementsInBlock = BCOO->BlockWidth * BCOO->BlockHeight;
         for(u32 ElementIndex = 0; ElementIndex < ElementsInBlock; ++ElementIndex)
         {
-            if(BCOO->Header.Field == PATTERN) 
+            if(BCOO->Header.Field == PATTERN)
             {
                 printf("%d, ", MM_ToArray(Block.Elements, u32)[ElementIndex]);
             }
-            if(ElementIndex % BCOO->BlockWidth == BCOO->BlockWidth-1)
+            if(ElementIndex % BCOO->BlockWidth == BCOO->BlockWidth - 1)
                 printf("\n");
         }
         printf("\n");
         printf("#################################\n");
     }
+}
+
+// NOTE(miha): FPGA need to have typed elements, can't have pointers to pointers, ...
+// This functions ensures this.
+internal inline void
+BCOO_ConvertToFPGA()
+{
+    // TODO(miha)
 }
 
 #endif // CONVERTER_BLOCK_COO_H
